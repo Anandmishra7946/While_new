@@ -1,114 +1,86 @@
 import 'dart:developer';
-import 'package:com.example.while_app/resources/components/message/apis.dart';
-import 'package:com.example.while_app/view/home_screen.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_dynamic_links/firebase_dynamic_links.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter_notification_channel/flutter_notification_channel.dart';
-import 'package:flutter_notification_channel/notification_importance.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart' as river;
-import 'package:get/route_manager.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:provider/provider.dart';
-import 'package:com.example.while_app/utils/routes/routes_name.dart';
-import 'package:com.example.while_app/view_model/providers/providers_list.dart';
-import 'package:com.example.while_app/view_model/wrapper/wrapper.dart';
 import 'firebase_options.dart';
+import 'view_model/wrapper/wrapper.dart';
+import 'view_model/providers/providers_list.dart';
 import 'utils/routes/routes.dart';
-import 'package:get/get.dart';
+import 'utils/routes/routes_name.dart';
 
 late Size mq;
-
-
-Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  await Firebase.initializeApp();
-  print('Handling a background message: ${message.messageId}');
-}
-
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  Provider.debugCheckInvalidValueType = null;
-  await _initializeFirebase();
-  runApp(const river.ProviderScope(child: MyApp()));
+  await initializeApp();
+  runApp(const ProviderScope(child: MyApp()));
 }
 
-Future<void> _initializeFirebase() async {
-  var result = await FlutterNotificationChannel.registerNotificationChannel(
-    description: 'For showing notification',
-    id: 'chats',
-    importance: NotificationImportance.IMPORTANCE_HIGH,
-    name: 'WHILE',
+Future<void> initializeApp() async {
+  await setupFirebaseMessaging();
+  await setupDynamicLinks();
+}
+
+Future<void> setupFirebaseMessaging() async {
+  FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+  await FirebaseMessaging.instance.setForegroundNotificationPresentationOptions(
+    alert: true,
+    badge: true,
+    sound: true,
   );
-  // Optionally print the result
-  // print(result);
-  await initDynamicLinks();
 }
 
-Future<void> initDynamicLinks() async {
-  log('Initializing Dynamic Links');
-
-  // Handle dynamic links when the app is already running
+Future<void> setupDynamicLinks() async {
   FirebaseDynamicLinks.instance.onLink.listen((dynamicLinkData) {
-    _handleDynamicLink(dynamicLinkData);
+    handleDynamicLink(dynamicLinkData);
+  }).onError((error) {
+    log('Dynamic Links $error');
   });
 
-  // Handle dynamic links when the app is not running
-  final PendingDynamicLinkData? initialLink =
-      await FirebaseDynamicLinks.instance.getInitialLink();
+  final initialLink = await FirebaseDynamicLinks.instance.getInitialLink();
   if (initialLink != null) {
-    APIs.getSelfInfo();
-    _handleDynamicLink(initialLink);
+    handleDynamicLink(initialLink);
   }
 }
 
-void _handleDynamicLink(PendingDynamicLinkData dynamicLinkData) {
+void handleDynamicLink(PendingDynamicLinkData dynamicLinkData) {
   final Uri deepLink = dynamicLinkData.link;
-  final route = deepLink.queryParameters['screen'];
-  final url = deepLink.queryParameters['url'];
-
-  if (route != null) {
-    log('Navigating to $route with parameter: $url');
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      Get.toNamed(
-        route,
-        //arguments: url ?? '', // Ensure you pass the parameters
-      );
-    });
-  } else {
-    log('Invalid dynamic link');
-  }
+  log('Dynamic Link  Navigating to ${deepLink.toString()}');
+  // Your navigation logic
 }
 
-class MyApp extends river.ConsumerWidget {
+Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  await Firebase.initializeApp();
+  log('FCM Background  Handling background message: ${message.messageId}');
+}
+
+class MyApp extends ConsumerWidget {
   const MyApp({super.key});
   @override
-  Widget build(BuildContext context, river.WidgetRef ref) {
+  Widget build(BuildContext context, WidgetRef ref) {
     mq = MediaQuery.of(context).size;
-    SystemUiOverlayStyle systemUiOverlayStyle = const SystemUiOverlayStyle(
-        statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Brightness.dark,
-        statusBarBrightness: Brightness.dark,
-        systemStatusBarContrastEnforced: false);
-    SystemChrome.setSystemUIOverlayStyle(systemUiOverlayStyle);
-
+    setSystemUIOverlayStyle();
     return MultiProvider(
       providers: providersList,
-      child: GetMaterialApp(
-        //theme: lightTheme,
-        //darkTheme: darkTheme,
-        //themeMode: ThemeMode.system,
-        routes: {
-          '/profile': (BuildContext context) => const HomeScreen(),
-          // Add other routes as needed
-        },
+      child: const MaterialApp(
         title: 'While',
         debugShowCheckedModeBanner: false,
         initialRoute: RoutesName.wrapper,
         onGenerateRoute: Routes.generateRoute,
-        home: const Wrapper(),
+        home: Wrapper(),
       ),
     );
   }
+}
+
+void setSystemUIOverlayStyle() {
+  SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+    statusBarColor: Colors.transparent,
+    statusBarIconBrightness: Brightness.dark,
+    statusBarBrightness: Brightness.dark,
+  ));
 }
