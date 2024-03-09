@@ -31,6 +31,7 @@ void main() async {
   Provider.debugCheckInvalidValueType = null;
   await _initializeFirebase();
   runApp(const river.ProviderScope(child: MyApp()));
+  //running fine
 }
 
 Future<void> _initializeFirebase() async {
