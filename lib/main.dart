@@ -20,7 +20,6 @@ import 'package:get/get.dart';
 
 late Size mq;
 
-
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp();
   print('Handling a background message: ${message.messageId}');
@@ -32,6 +31,7 @@ void main() async {
   Provider.debugCheckInvalidValueType = null;
   await _initializeFirebase();
   runApp(const river.ProviderScope(child: MyApp()));
+  //running fine
 }
 
 Future<void> _initializeFirebase() async {
