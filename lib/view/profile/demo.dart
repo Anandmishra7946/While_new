@@ -1,9 +1,9 @@
 import 'package:com.example.while_app/resources/components/message/apis.dart';
-import 'package:com.example.while_app/view_model/firebasedata.dart';
 import 'package:com.example.while_app/view_model/providers/auth_provider.dart';
 import 'package:com.example.while_app/view_model/providers/connect_users_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class Connect extends ConsumerWidget {
   const Connect({Key? key}) : super(key: key);
@@ -33,8 +33,11 @@ class Connect extends ConsumerWidget {
                   leading: CircleAvatar(
                     backgroundImage: NetworkImage(user.image),
                   ),
-                  title: Text(user.name),
-                  subtitle: Text(user.email),
+                  title: Text(
+                    user.name,
+                    style: GoogleFonts.ptSans(),
+                  ),
+                  subtitle: Text(user.email, style: GoogleFonts.ptSans()),
                   trailing: ElevatedButton(
                     onPressed: () async {
                       final didFollow = await ref.read(followUserProvider)(
@@ -55,7 +58,7 @@ class Connect extends ConsumerWidget {
                         );
                       }
                     },
-                    child: const Text('Follow'),
+                    child: Text('Follow', style: GoogleFonts.ptSans()),
                   ),
                 );
               },

@@ -234,6 +234,7 @@ class APIs {
       'notificationText': notificationText
     });
   }
+  
 
   static Future<void> markAllNotificationsAsRead(String userId) async {
     var collection = FirebaseFirestore.instance
